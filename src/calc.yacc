@@ -54,13 +54,16 @@ int is_valid_identifier(const char *name);
 %token CLEAR LIST
 %token SIN COS TAN LOG LN PI
 
+%left OR
+%left XOR
+%left AND
+%left EQUALS NOTEQUALS
 %left PLUS MINUS
+%left LT LTE GT GTE
 %left TIMES DIVIDE MOD
-%right UMINUS
+%right NOT UMINUS
+%right INC DEC 
 %right POWER
-%left RSHIFT LSHIFT
-%left AND OR XOR
-%right NOT INC DEC
 
 %type <expr_val> expr
 %type <expr_val> term
@@ -177,84 +180,6 @@ line:
 
 expr:
     term                          { $$ = $1; }
-    | expr PLUS term              {
-                                    if ($1.type == -1 || $3.type == -1) {
-                                        $$.type = -1;
-                                    } else {
-                                        $$.value = $1.value + $3.value;
-                                        $$.type = ($1.type || $3.type);
-                                    }
-                                  }
-    | expr MINUS term             {
-                                    if ($1.type == -1 || $3.type == -1) {
-                                        $$.type = -1;
-                                    } else {
-                                        $$.value = $1.value - $3.value;
-                                        $$.type = ($1.type || $3.type);
-                                    }
-                                  }
-    | expr TIMES term             {
-                                    if ($1.type == -1 || $3.type == -1) {
-                                        $$.type = -1;
-                                    } else {
-                                        $$.value = $1.value * $3.value;
-                                        $$.type = ($1.type || $3.type);
-                                    }
-                                  }
-    | expr DIVIDE term            {
-                                    if ($1.type == -1 || $3.type == -1) {
-                                        $$.type = -1;
-                                    } else if ($3.value == 0) {
-                                        print_error("Division Error", "Cannot divide by zero");
-                                        $$.type = -1;
-                                    } else {
-                                        $$.value = $1.value / $3.value;
-                                        $$.type = ($1.type || $3.type);
-                                    }
-                                  }
-    | expr MOD term               {
-                                    if ($1.type == -1 || $3.type == -1) {
-                                        $$.type = -1;
-                                    } else if ($3.value == 0) {
-                                        print_error("Modulo Error", "Cannot perform modulo operation with zero");
-                                        $$.type = -1;
-                                    } else {
-                                        $$.value = fmod($1.value, $3.value);
-                                        $$.type = ($1.type || $3.type);
-                                    }
-                                  }
-    | expr POWER term             {
-                                    if ($1.type == -1 || $3.type == -1) {
-                                        $$.type = -1;
-                                    } else {
-                                        $$.value = pow($1.value, $3.value);
-                                        $$.type = (fmod($$.value, 1.0) == 0.0 && $1.type == 0 && $3.type == 0) ? 0 : 1;
-                                    }
-                                  }
-    | expr AND term               {
-                                    if ($1.type == -1 || $3.type == -1) {
-                                        $$.type = -1;
-                                    } else {
-                                        $$.value = (int)$1.value & (int)$3.value;
-                                        $$.type = 0;
-                                    }
-                                  }
-    | expr OR term                {
-                                    if ($1.type == -1 || $3.type == -1) {
-                                        $$.type = -1;
-                                    } else {
-                                        $$.value = (int)$1.value | (int)$3.value;
-                                        $$.type = 0;
-                                    }
-                                  }
-    | expr XOR term               {
-                                    if ($1.type == -1 || $3.type == -1) {
-                                        $$.type = -1;
-                                    } else {
-                                        $$.value = (int)$1.value ^ (int)$3.value;
-                                        $$.type = 0;
-                                    }
-                                  }
     | expr RSHIFT term            {
                                     if ($1.type == -1 || $3.type == -1) {
                                         $$.type = -1;
@@ -271,26 +196,60 @@ expr:
                                         $$.type = 0;
                                     }
                                   }
+
+    | expr MOD term               {
+                                    if ($1.type == -1 || $3.type == -1) {
+                                        $$.type = -1;
+                                    } else if ($3.value == 0) {
+                                        print_error("Modulo Error", "Cannot perform modulo operation with zero");
+                                        $$.type = -1;
+                                    } else {
+                                        $$.value = fmod($1.value, $3.value);
+                                        $$.type = ($1.type || $3.type);
+                                    }
+                                  }
+    | expr OR term                {
+                                    if ($1.type == -1 || $3.type == -1) {
+                                        $$.type = -1;
+                                    } else {
+                                        $$.value = (int)$1.value | (int)$3.value;
+                                        $$.type = 0;
+                                    }
+                                  }
+    | expr AND expr               {
+                                    if ($1.type == -1 || $3.type == -1) {
+                                        $$.type = -1;
+                                    } else {
+                                        $$.value = (int)$1.value & (int)$3.value;
+                                        $$.type = 0;
+                                    }
+                                  }
+    | expr XOR term               {
+                                    if ($1.type == -1 || $3.type == -1) {
+                                        $$.type = -1;
+                                    } else {
+                                        $$.value = (int)$1.value ^ (int)$3.value;
+                                        $$.type = 0;
+                                    }
+                                  }
     ;
 
 term:
     factor                        { $$ = $1; }
-    | term TIMES factor           {
+    
+    | term PLUS factor              {
                                     if ($1.type == -1 || $3.type == -1) {
                                         $$.type = -1;
                                     } else {
-                                        $$.value = $1.value * $3.value;
+                                        $$.value = $1.value + $3.value;
                                         $$.type = ($1.type || $3.type);
                                     }
                                   }
-    | term DIVIDE factor          {
+    | term MINUS factor             {
                                     if ($1.type == -1 || $3.type == -1) {
                                         $$.type = -1;
-                                    } else if ($3.value == 0) {
-                                        print_error("Division Error", "Cannot divide by zero");
-                                        $$.type = -1;
                                     } else {
-                                        $$.value = $1.value / $3.value;
+                                        $$.value = $1.value - $3.value;
                                         $$.type = ($1.type || $3.type);
                                     }
                                   }
@@ -321,6 +280,33 @@ factor:
                                   }
     | LPAREN expr RPAREN          { $$ = $2; }
     | unary                       { $$ = $1; }
+    | factor TIMES factor             {
+                                    if ($1.type == -1 || $3.type == -1) {
+                                        $$.type = -1;
+                                    } else {
+                                        $$.value = $1.value * $3.value;
+                                        $$.type = ($1.type || $3.type);
+                                    }
+                                  }
+    | factor DIVIDE factor            {
+                                    if ($1.type == -1 || $3.type == -1) {
+                                        $$.type = -1;
+                                    } else if ($3.value == 0) {
+                                        print_error("Division Error", "Cannot divide by zero");
+                                        $$.type = -1;
+                                    } else {
+                                        $$.value = $1.value / $3.value;
+                                        $$.type = ($1.type || $3.type);
+                                    }
+                                  }
+    | factor POWER factor             {
+                                    if ($1.type == -1 || $3.type == -1) {
+                                        $$.type = -1;
+                                    } else {
+                                        $$.value = pow($1.value, $3.value);
+                                        $$.type = (fmod($$.value, 1.0) == 0.0 && $1.type == 0 && $3.type == 0) ? 0 : 1;
+                                    }
+                                  }
     ;
 
 unary:

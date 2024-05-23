@@ -159,6 +159,32 @@ int main() {
     run_test("alfa = (x<<1)*2\n", "32");
     run_test("alfa+1\n", "33");
 
+    // Precedence Test
+    run_test("7<<2-1\n", "14");
+    run_test("2 + 3 * 4\n", "14");
+    run_test("2 * 3 + 4\n", "10");
+    run_test("2 + 3 * 4 - 5\n", "9");
+    run_test("2 * (3 + 4)\n", "14");
+    run_test("(2 + 3) * 4\n", "20");
+    run_test("2 + 3 * 4 / 2\n", "8");
+    run_test("2 * 3 + 4 / 2\n", "8");
+    run_test("2 + 3 * 4 % 3\n", "2");
+    run_test("2 * 3 % 4 + 5\n", "7");
+    run_test("2 + 3 << 1\n", "10");
+    run_test("2 << 1 + 3\n", "32");
+    run_test("2 + 3 >> 1\n", "2");
+    run_test("8 >> 1 + 1\n", "2");
+    run_test("2 ** 3 + 4\n", "12");
+    run_test("2 + 3 ** 2\n", "11");
+    run_test("2 ** (3 + 1)\n", "16");
+    run_test("2 * 3 ** 2\n", "18");
+    run_test("2 + 3 & 1\n", "1");
+    run_test("2 & 3 + 1\n", "0");
+    run_test("2 | 3 + 1\n", "6");
+    run_test("2 + 3 | 1\n", "5");
+    run_test("2 ^ 3 + 1\n", "6");
+    run_test("2 + 3 ^ 1\n", "4");
+
     print_test_summary();
 
     return 0;
